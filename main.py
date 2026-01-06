@@ -1,68 +1,9 @@
+"""
+System rekomendacji filmów - interfejs użytkownika (CLI)
+"""
+
 import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import os
-
-
-class MovieRecommender:
-    """Prosty system rekomendacji filmów oparty na content-based filtering"""
-    
-    def __init__(self, data_path='data/movies.csv'):
-        """Inicjalizacja systemu rekomendacji"""
-        self.df = pd.read_csv(data_path)
-        self.tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-        self._prepare_features()
-        
-    def _prepare_features(self):
-        """Przygotowanie cech do analizy (gatunki + rok)"""
-        # Łączenie gatunków i roku w jeden ciąg tekstowy
-        self.df['features'] = self.df['genres'].str.replace('|', ' ') + ' ' + self.df['year'].astype(str)
-        
-        # TF-IDF vectorization
-        self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(self.df['features'])
-        
-        # Obliczenie macierzy podobieństwa
-        self.cosine_sim = cosine_similarity(self.tfidf_matrix, self.tfidf_matrix)
-    
-    def get_recommendations(self, movie_title, n=5):
-        # Znajdź indeks filmu
-        try:
-            idx = self.df[self.df['title'].str.lower() == movie_title.lower()].index[0]
-        except IndexError:
-            return f"Film '{movie_title}' nie został znaleziony w bazie danych."
-        
-        # Pobierz podobieństwa dla tego filmu
-        sim_scores = list(enumerate(self.cosine_sim[idx]))
-        
-        # Sortuj po podobieństwie (malejąco)
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        
-        # Pobierz n najbardziej podobnych filmów (pomijając sam film)
-        sim_scores = sim_scores[1:n+1]
-        
-        # Pobierz indeksy filmów
-        movie_indices = [i[0] for i in sim_scores]
-        
-        # Zwróć rekomendacje
-        recommendations = self.df.iloc[movie_indices][['title', 'genres', 'year', 'rating']].copy()
-        recommendations['similarity_score'] = [round(score[1], 3) for score in sim_scores]
-        
-        return recommendations
-    
-    def get_top_rated(self, n=10):
-        """Zwraca najpopularniejsze filmy według oceny"""
-        return self.df.nlargest(n, 'rating')[['title', 'genres', 'year', 'rating']]
-    
-    def search_by_genre(self, genre, n=10):
-        """Znajdź filmy według gatunku"""
-        mask = self.df['genres'].str.contains(genre, case=False, na=False)
-        results = self.df[mask].nlargest(n, 'rating')[['title', 'genres', 'year', 'rating']]
-        return results if len(results) > 0 else f"Nie znaleziono filmów w gatunku '{genre}'"
-    
-    def list_all_movies(self):
-        """Wyświetl wszystkie dostępne filmy"""
-        return self.df[['title', 'genres', 'year', 'rating']]
+from recommender import MovieRecommender
 
 
 def main():
@@ -77,6 +18,7 @@ def main():
         print(f"\n✓ Załadowano {len(recommender.df)} filmów do bazy danych\n")
     except FileNotFoundError:
         print("Błąd: Nie znaleziono pliku data/movies.csv")
+        print("Uruchom najpierw: python download_data.py")
         return
     
     while True:
@@ -88,6 +30,13 @@ def main():
         print("5. Wyjście")
         
         choice = input("\nTwój wybór (1-5): ").strip()
+        
+        # Normalizuj wybór - akceptuj zarówno numer jak i pierwsze znaki
+        if choice and not choice.isdigit():
+            # Spróbuj wyodrębnić numer z początku
+            first_char = choice[0]
+            if first_char.isdigit():
+                choice = first_char
         
         if choice == '1':
             print("\n--- Rekomendacje dla filmu ---")
