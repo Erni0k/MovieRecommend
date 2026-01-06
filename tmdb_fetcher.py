@@ -13,6 +13,7 @@ class TMDbFetcher:
     """Klasa do pobierania danych z TMDb API"""
     
     BASE_URL = "https://api.themoviedb.org/3"
+    BASE_IMAGE_URL = "https://image.tmdb.org/t/p/w500"  # URL bazowy dla okładek (w500 = szerokość 500px)
     
     def __init__(self, api_key: str):
         """
@@ -206,6 +207,10 @@ def process_movies_to_dataframe(movies: List[Dict]) -> pd.DataFrame:
         release_date = movie.get('release_date', '')
         year = int(release_date.split('-')[0]) if release_date else 0
         
+        # Pobierz URL okładki
+        poster_path = movie.get('poster_path', '')
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ''
+        
         processed_movies.append({
             'movieId': movie.get('id'),
             'title': f"{movie.get('title', 'Unknown')} ({year})" if year else movie.get('title', 'Unknown'),
@@ -214,7 +219,8 @@ def process_movies_to_dataframe(movies: List[Dict]) -> pd.DataFrame:
             'rating': round(movie.get('vote_average', 0), 2),
             'num_ratings': movie.get('vote_count', 0),
             'popularity': round(movie.get('popularity', 0), 2),
-            'overview': movie.get('overview', '')
+            'overview': movie.get('overview', ''),
+            'poster_url': poster_url
         })
     
     df = pd.DataFrame(processed_movies)
@@ -289,6 +295,22 @@ def download_tmdb_data(api_key: str,
     print("=" * 70)
     
     return output_path
+
+
+def get_poster_url(poster_path: str, size: str = 'w500') -> str:
+    """
+    Generuje pełny URL do okładki filmu
+    
+    Args:
+        poster_path: Ścieżka do okładki z API TMDb
+        size: Rozmiar okładki (w92, w154, w185, w342, w500, w780, original)
+        
+    Returns:
+        Pełny URL do okładki lub pusty string jeśli brak
+    """
+    if not poster_path:
+        return ''
+    return f"https://image.tmdb.org/t/p/{size}{poster_path}"
 
 
 def load_api_key_from_env() -> Optional[str]:

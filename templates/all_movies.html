@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Wszystkie Filmy - MovieRecommend{% endblock %}
+
+{% block content %}
+<div class="container results-container">
+    <div class="results-header">
+        <h1>📚 Wszystkie Filmy w Bazie</h1>
+        <p class="subtitle">Łącznie {{ total }} filmów</p>
+        <a href="/" class="btn-back">← Wróć do strony głównej</a>
+    </div>
+    
+    <div class="movies-grid">
+        {% for movie in movies %}
+        <div class="movie-card">
+            <div class="movie-poster">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" 
+                         alt="{{ movie.title }}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/500x750/1a1a2e/eee?text=No+Image'">
+                {% else %}
+                    <img src="https://via.placeholder.com/500x750/1a1a2e/eee?text=No+Image" 
+                         alt="{{ movie.title }}">
+                {% endif %}
+                <div class="movie-rating">⭐ {{ "%.1f"|format(movie.rating) }}</div>
+            </div>
+            <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <p class="movie-genres">{{ movie.genres.replace('|', ' • ') }}</p>
+                <p class="movie-year">{{ movie.year }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

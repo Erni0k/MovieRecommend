@@ -1,148 +1,260 @@
-# System Rekomendacji Filmów 🎬
+# 🎬 MovieRecommend - System Rekomendacji Filmów
 
-Prosty system rekomendacji filmów wykorzystujący content-based filtering (filtrowanie oparte na treści) z danymi z The Movie Database (TMDb).
+System rekomendacji filmów z interfejsem webowym Flask i automatycznym pobieraniem danych z TMDb API.
 
-## Opis projektu
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Flask](https://img.shields.io/badge/flask-2.3+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-System analizuje gatunki filmów i rok produkcji, aby rekomendować filmy podobne do wybranego tytułu. Wykorzystuje algorytm TF-IDF oraz miarę podobieństwa cosinusowego do znajdowania filmów o podobnych cechach.
+## ✨ Funkcje
 
-Dane filmowe pobierane są z **The Movie Database (TMDb)** - największej społecznościowej bazy filmów z aktualnymi informacjami o milionach filmów i seriali.
+- 🔍 **Inteligentne wyszukiwanie** - automatyczne pobieranie filmów z TMDb API
+- 🎯 **Rekomendacje** - algorytm content-based filtering (TF-IDF + cosine similarity)
+- 🖼️ **Okładki filmów** - wysokiej jakości obrazy z TMDb (automatycznie przy pobieraniu)
+- 🎭 **Przeglądanie według gatunków** - Action, Comedy, Drama, Sci-Fi i więcej
+- 📱 **Responsywny design** - działa na desktop i mobile
+- ⭐ **Oceny i statystyki** - rating, rok produkcji, popularność
 
-## Funkcjonalności
+## 🚀 Szybki Start
 
-- **Rekomendacje dla filmu** - znajdź filmy podobne do wybranego tytułu
-  - 🆕 **Automatyczne wyszukiwanie** - jeśli filmu nie ma w bazie, system automatycznie wyszuka go w TMDb API i doda do bazy
-- **Najpopularniejsze filmy** - wyświetl top filmy według ocen
-- **Wyszukiwanie według gatunku** - filtruj filmy po gatunku (Drama, Action, Sci-Fi, itd.)
-- **Lista wszystkich filmów** - przeglądaj całą bazę danych
-- **Automatyczne pobieranie danych** - pobierz najnowsze dane z TMDb API
-- **Dynamiczne rozszerzanie bazy** - baza rośnie wraz z użytkowaniem systemu
+### 1. Wymagania
+- Python 3.8 lub nowszy
+- Klucz API z TMDb (darmowy)
 
-## Technologie
+### 2. Instalacja
 
-- Python 3.x
-- pandas - przetwarzanie danych
-- scikit-learn - TF-IDF i podobieństwo cosinusowe
-- requests - komunikacja z TMDb API
-- The Movie Database (TMDb) API - źródło danych
-- numpy - operacje numeryczne
-
-## Instalacja
-
-1. Sklonuj repozytorium lub pobierz pliki projektu
-
-2. Zainstaluj wymagane biblioteki:
 ```bash
+# Sklonuj repozytorium
+git clone <your-repo-url>
+cd MovieRecomend
+
+# Zainstaluj zależności
 pip install -r requirements.txt
 ```
 
-3. **Pobierz dane z The Movie Database (TMDb):**
+### 3. Konfiguracja API
 
-   **Krok 1: Uzyskaj klucz API TMDb (darmowy)**
-   - Zarejestruj się na https://www.themoviedb.org/
-   - Przejdź do Settings -> API
-   - Wygeneruj klucz API (API Key v3)
-   
-   **Krok 2: Ustaw klucz API**
-   ```bash
-   # Windows PowerShell
-   $env:TMDB_API_KEY="twoj_klucz_api"
-   
-   # Windows CMD
-   set TMDB_API_KEY=twoj_klucz_api
-   
-   # Linux/Mac
-   export TMDB_API_KEY="twoj_klucz_api"
-   ```
-   
-   **Krok 3: Pobierz dane**
-   ```bash
-   python download_data.py
-   ```
-   
-   Skrypt pobierze najnowsze dane filmowe z TMDb API i automatycznie przetworzy je.
-   Dostępne opcje:
-   - ~400 filmów (szybkie, zalecane do testów)
-   - ~1000 filmów (średnie)
-   - ~2000 filmów (duże)
-   - Niestandardowa ilość
+1. Zarejestruj się na https://www.themoviedb.org/
+2. Przejdź do **Settings → API**
+3. Wygeneruj klucz API (v3)
+4. Utwórz plik `.env`:
 
-## Uruchomienie
+```env
+TMDB_API_KEY=twoj_klucz_api_tutaj
+```
 
-Uruchom program w terminalu:
+### 4. Pobierz bazę filmów
+
+```bash
+python download_data.py
+```
+
+Wybierz liczbę filmów (zalecane: 400-1000 dla startu).
+
+### 5. Uruchom aplikację
+
+```bash
+# Interfejs webowy (zalecane)
+python app.py
+```
+
+Otwórz: **http://localhost:5000**
+
+```bash
+# Lub interfejs CLI
+python main.py
+```
+
+## 📁 Struktura Projektu
+
+```
+MovieRecomend/
+├── app.py                    # Aplikacja Flask (główna)
+├── main.py                   # Interfejs CLI
+├── recommender.py            # Logika rekomendacji
+├── tmdb_fetcher.py           # Komunikacja z TMDb API
+├── download_data.py          # Pobieranie początkowej bazy
+├── update_all_posters.py     # Opcjonalnie: uzupełnienie okładek
+│
+├── templates/                # Szablony HTML
+│   ├── base.html            # Szablon bazowy
+│   ├── index.html           # Strona główna
+│   ├── results.html         # Wyniki rekomendacji
+│   ├── genre.html           # Filmy według gatunku
+│   └── all_movies.html      # Wszystkie filmy
+│
+├── static/
+│   └── style.css            # Style CSS
+│
+├── data/
+│   └── movies.csv           # Baza danych filmów
+│
+├── requirements.txt          # Zależności
+├── .env                      # Klucz API (NIE commituj!)
+└── .gitignore               # Pliki ignorowane przez git
+```
+
+## 🎮 Użycie
+
+### Interfejs Webowy
+
+1. **Wyszukiwanie filmu:**
+   - Wpisz tytuł filmu
+   - Wybierz liczbę rekomendacji
+   - Kliknij "Szukaj"
+
+2. **Przeglądanie według gatunku:**
+   - Kliknij gatunek w nawigacji
+   - Lub przejdź do `/genre/<nazwa>`
+
+3. **Wszystkie filmy:**
+   - Kliknij "Wszystkie filmy" w menu
+   - Lub przejdź do `/all`
+
+### Interfejs CLI
+
 ```bash
 python main.py
 ```
 
-## Użycie
+Opcje menu:
+1. Pokaż rekomendacje dla filmu
+2. Pokaż najpopularniejsze filmy
+3. Szukaj filmów według gatunku
+4. Wyświetl wszystkie filmy
+5. Wyjście
 
-Po uruchomieniu programu zobaczysz menu z opcjami:
+## 🔧 Jak to działa?
 
-1. **Pokaż rekomendacje dla filmu** - wpisz tytuł filmu (np. "Inception"), a system pokaże podobne filmy
-   - 🔥 **NOWOŚĆ**: Jeśli filmu nie ma w lokalnej bazie, system automatycznie wyszuka go w TMDb API i doda do bazy!
-   - Wymaga ustawionej zmiennej środowiskowej `TMDB_API_KEY`
-2. **Pokaż najpopularniejsze filmy** - wyświetla filmy z najwyższymi ocenami
-3. **Szukaj filmów według gatunku** - wpisz gatunek (Drama, Action, Sci-Fi, Crime, etc.)
-4. **Wyświetl wszystkie filmy** - pokazuje całą bazę 30 filmów
-5. **Wyjście** - zamyka program
+### Algorytm Rekomendacji
 
-## Przykład użycia
+1. **TF-IDF Vectorization** - przekształca gatunki i rok produkcji na wektory
+2. **Cosine Similarity** - oblicza podobieństwo między filmami
+3. **Multi-stage search:**
+   - Dokładne dopasowanie tytułu
+   - Częściowe dopasowanie (np. "Terrifier" → znajdzie "Terrifier 2", "Terrifier 3")
+   - Wyszukiwanie w TMDb API (jeśli film nie jest w bazie)
+   - Automatyczne dodanie nowego filmu do bazy
 
-### Podstawowe wyszukiwanie
-```
-Podaj tytuł filmu: Inception
-Ile rekomendacji? 5
+### TMDb API
 
-Rekomendacje:
-- Interstellar (Adventure|Drama|Sci-Fi)
-- The Matrix (Action|Sci-Fi)
-- The Prestige (Drama|Mystery|Sci-Fi)
-```
+- Automatyczne pobieranie nowych filmów
+- Okładki 500px (linki, nie pliki)
+- Metadane: oceny, opisy, gatunki, rok
+- Rate limiting: pauza co 35 zapytań
 
-### Automatyczne wyszukiwanie w TMDb API
-```
-Podaj tytuł filmu: Dune 2024
+### Okładki Filmów
 
-ℹ️  Film 'Dune 2024' nie został znaleziony w lokalnej bazie.
-🔍 Wyszukiwanie 'Dune 2024' w TMDb API...
-✅ Znaleziono 15 filmów
+**Automatyczne dodawanie** przy:
+- Pobieraniu nowej bazy (`download_data.py`)
+- Wyszukiwaniu nieznanych filmów (dodawane do CSV z `poster_url`)
 
-📋 Znaleziono wyniki:
-  1. Dune: Part Two (2024) - Ocena: 8.2/10
-  2. Dune (2021) - Ocena: 7.8/10
-  3. Dune (1984) - Ocena: 6.2/10
+URL format: `https://image.tmdb.org/t/p/w500/[poster_path].jpg`
 
-Wybierz numer filmu (Enter = pierwszy): 1
+## 📊 API Endpoints
 
-➕ Dodawanie filmu: Dune: Part Two...
-✅ Dodano film do bazy danych (401 filmów)
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| `/` | GET | Strona główna z top 12 filmów |
+| `/search` | POST | Wyszukiwanie i rekomendacje |
+| `/genre/<nazwa>` | GET | Filmy według gatunku |
+| `/all` | GET | Wszystkie filmy w bazie |
+| `/api/search?q=<query>` | GET | AJAX wyszukiwanie (JSON) |
 
-Rekomendacje dla 'Dune: Part Two':
-- Blade Runner 2049 (Sci-Fi|Thriller)
-- Arrival (Drama|Sci-Fi)
-- Interstellar (Adventure|Drama|Sci-Fi)
-```
+## ⚙️ Konfiguracja
 
-## Struktura projektu
+### requirements.txt
 
-```
-MovieRecomend/
-├── main.py              # Główny plik z systemem rekomendacji
-├── tmdb_fetcher.py      # Moduł do pobierania danych z TMDb API
-├── download_data.py     # Skrypt do pobierania początkowej bazy
-├── test_api.py          # Skrypt testowy API
-├── requirements.txt     # Zależności projektu
-├── Readme.md           # Dokumentacja
-├── .env.example        # Szablon konfiguracji
-├── .gitignore          # Pliki ignorowane przez git
-└── data/
-    └── movies.csv      # Baza danych filmów (auto-rozszerzająca się)
+```txt
+pandas>=1.5.0
+numpy>=1.23.0
+scikit-learn>=1.2.0
+requests>=2.28.0
+Flask>=2.3.0
 ```
 
-## Jak działa algorytm?
+### Zmiana rozmiaru okładek
 
-1. **TF-IDF (Term Frequency-Inverse Document Frequency)** - przekształca gatunki i rok filmu w wektory numeryczne
-2. **Cosine Similarity** - oblicza podobieństwo między filmami na podstawie tych wektorów
-3. **Ranking** - sortuje filmy według podobieństwa i zwraca top N rekomendacji
+W `tmdb_fetcher.py`, funkcja `get_poster_url`:
+
+```python
+def get_poster_url(poster_path: str, size: str = 'w500') -> str:
+    # Dostępne rozmiary: w92, w154, w185, w342, w500, w780, original
+```
+
+## 🎨 Personalizacja
+
+### Kolory CSS
+
+W `static/style.css`:
+
+```css
+/* Gradient tła */
+background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+
+/* Akcent */
+color: #4ecdc4;
+
+/* Przyciski */
+background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+```
+
+### Dodanie gatunków do menu
+
+W `templates/base.html`:
+
+```html
+<li><a href="/genre/Horror">Horror</a></li>
+<li><a href="/genre/Romance">Romans</a></li>
+```
+
+## 🔒 Bezpieczeństwo
+
+- ✅ Klucz API w `.env` (nie w kodzie)
+- ✅ `.gitignore` chroni `.env`
+- ⚠️ **NIGDY** nie commituj `.env` na GitHub
+
+### .gitignore
+
+```
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.log
+```
+
+## 🐛 Rozwiązywanie Problemów
+
+### Brak modułu
+```bash
+pip install -r requirements.txt
+```
+
+### Brak klucza API
+```
+Ustaw TMDB_API_KEY w pliku .env
+```
+
+### Brak pliku movies.csv
+```bash
+python download_data.py
+```
+
+### Błąd kodowania (Windows)
+Skrypty automatycznie ustawiają UTF-8.
+
+## 📈 Wydajność
+
+- **Baza danych:** CSV (~1755+ filmów)
+- **Wyszukiwanie:** <100ms
+- **Rekomendacje:** <200ms
+- **Dodanie filmu z API:** ~0.3s
+
+---
+
+**Wersja:** 1.0.0  
+**Ostatnia aktualizacja:** Styczeń 2026
 
 

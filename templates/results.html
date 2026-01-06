@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Rekomendacje dla: {{ search_query }} - MovieRecommend{% endblock %}
+
+{% block content %}
+<div class="container results-container">
+    
+    {% if error %}
+    <div class="error-box">
+        <h2>❌ Nie znaleziono filmu</h2>
+        <p>{{ error }}</p>
+        <a href="/" class="btn-back">← Wróć do strony głównej</a>
+    </div>
+    {% else %}
+    
+    <div class="results-header">
+        <h1>🎬 Rekomendacje dla: <span class="highlight">{{ search_query }}</span></h1>
+        <a href="/" class="btn-back">← Szukaj innego filmu</a>
+    </div>
+    
+    <div class="movies-grid">
+        {% for movie in movies %}
+        <div class="movie-card">
+            <div class="movie-poster">
+                {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" 
+                         alt="{{ movie.title }}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/500x750/1a1a2e/eee?text=No+Image'">
+                {% else %}
+                    <img src="https://via.placeholder.com/500x750/1a1a2e/eee?text=No+Image" 
+                         alt="{{ movie.title }}">
+                {% endif %}
+                <div class="movie-rating">⭐ {{ "%.1f"|format(movie.rating) }}</div>
+                {% if movie.similarity_score %}
+                <div class="similarity-badge">
+                    {{ "%.0f"|format(movie.similarity_score * 100) }}% dopasowania
+                </div>
+                {% endif %}
+            </div>
+            <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <p class="movie-genres">{{ movie.genres.replace('|', ' • ') }}</p>
+                <p class="movie-year">{{ movie.year }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% endif %}
+</div>
+{% endblock %}

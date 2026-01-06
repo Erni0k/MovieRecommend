@@ -186,21 +186,25 @@ class MovieRecommender:
         movie_indices = [i[0] for i in sim_scores]
         
         # Zwróć rekomendacje
-        recommendations = self.df.iloc[movie_indices][['title', 'genres', 'year', 'rating']].copy()
+        columns = ['title', 'genres', 'year', 'rating', 'poster_url'] if 'poster_url' in self.df.columns else ['title', 'genres', 'year', 'rating']
+        recommendations = self.df.iloc[movie_indices][columns].copy()
         recommendations['similarity_score'] = [round(score[1], 3) for score in sim_scores]
         
         return recommendations
     
     def get_top_rated(self, n=10):
         """Zwraca najpopularniejsze filmy według oceny"""
-        return self.df.nlargest(n, 'rating')[['title', 'genres', 'year', 'rating']]
+        columns = ['title', 'genres', 'year', 'rating', 'poster_url'] if 'poster_url' in self.df.columns else ['title', 'genres', 'year', 'rating']
+        return self.df.nlargest(n, 'rating')[columns]
     
     def search_by_genre(self, genre, n=10):
         """Znajdź filmy według gatunku"""
         mask = self.df['genres'].str.contains(genre, case=False, na=False)
-        results = self.df[mask].nlargest(n, 'rating')[['title', 'genres', 'year', 'rating']]
+        columns = ['title', 'genres', 'year', 'rating', 'poster_url'] if 'poster_url' in self.df.columns else ['title', 'genres', 'year', 'rating']
+        results = self.df[mask].nlargest(n, 'rating')[columns]
         return results if len(results) > 0 else f"Nie znaleziono filmów w gatunku '{genre}'"
     
     def list_all_movies(self):
         """Wyświetl wszystkie dostępne filmy"""
-        return self.df[['title', 'genres', 'year', 'rating']]
+        columns = ['title', 'genres', 'year', 'rating', 'poster_url'] if 'poster_url' in self.df.columns else ['title', 'genres', 'year', 'rating']
+        return self.df[columns]
