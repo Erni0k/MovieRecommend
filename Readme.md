@@ -83,30 +83,31 @@ python main.py
 ## 📁 Struktura Projektu
 
 ```
-MovieRecomend/
+MovieRecommend/
 ├── app.py                    # Aplikacja Flask (główna)
-├── main.py                   # Interfejs CLI
-├── recommender.py            # Logika rekomendacji
+├── main.py                   # Interfejs CLI (przestarzały)
+├── recommender.py            # Logika rekomendacji (TF-IDF + cosine similarity)
 ├── tmdb_fetcher.py           # Komunikacja z TMDb API
-├── download_data.py          # Pobieranie początkowej bazy
-├── update_all_posters.py     # Opcjonalnie: uzupełnienie okładek
+├── download_data.py          # Pobieranie początkowej bazy danych
 │
 ├── templates/                # Szablony HTML
 │   ├── base.html            # Szablon bazowy
 │   ├── index.html           # Strona główna
 │   ├── results.html         # Wyniki rekomendacji
+│   ├── select_movie.html    # Wybór filmu z wielu wyników (NOWE)
 │   ├── genre.html           # Filmy według gatunku
 │   └── all_movies.html      # Wszystkie filmy
 │
 ├── static/
-│   └── style.css            # Style CSS
+│   └── style.css            # Style CSS (responsywne)
 │
 ├── data/
-│   └── movies.csv           # Baza danych filmów
+│   └── movies.csv           # Baza danych filmów (gitignore)
 │
-├── requirements.txt          # Zależności
+├── requirements.txt          # Zależności Python
 ├── .env                      # Klucz API (NIE commituj!)
-└── .gitignore               # Pliki ignorowane przez git
+├── .gitignore               # Pliki ignorowane przez git
+└── Readme.md                # Ten plik
 ```
 
 ## 🎮 Użycie
@@ -273,8 +274,20 @@ Ustaw TMDB_API_KEY w pliku .env
 ```bash
 python download_data.py
 ```
+Aplikacja się zawiesza
+Sprawdź czy nie ma `input()` w kodzie - wszystkie interakcje powinny być przez przeglądarkę.
 
-### Błąd kodowania (Windows)
+## 📝 Licencja
+
+MIT License - możesz swobodnie używać i modyfikować projekt.
+
+## 👨‍💻 Autor
+
+Stworzony z ❤️ przez [Erni0k](https://github.com/Erni0k)
+
+---
+
+**Enjoy discovering new movies! 🎬🍿**
 Skrypty automatycznie ustawiają UTF-8.
 
 ## 📈 Wydajność
