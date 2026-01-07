@@ -31,9 +31,16 @@ class MovieRecommender:
         self._prepare_features()
         
     def _prepare_features(self):
-        """Przygotowanie cech do analizy (gatunki + rok)"""
-        # Łączenie gatunków i roku w jeden ciąg tekstowy
-        self.df['features'] = self.df['genres'].str.replace('|', ' ') + ' ' + self.df['year'].astype(str)
+        """Przygotowanie cech do analizy (gatunki + overview)"""
+        # Podwójna waga dla gatunków + opis fabuły
+        genres_doubled = self.df['genres'].str.replace('|', ' ') + ' ' + self.df['genres'].str.replace('|', ' ')
+        
+        if 'overview' in self.df.columns:
+            # Użyj overview - opis fabuły zawiera motywy, klimat, słowa kluczowe
+            self.df['features'] = genres_doubled + ' ' + self.df['overview'].fillna('')
+        else:
+            # Fallback: tylko gatunki
+            self.df['features'] = genres_doubled
         
         # TF-IDF vectorization
         self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(self.df['features'])
@@ -82,7 +89,8 @@ class MovieRecommender:
             
             # Przetwórz i dodaj film
             print(f"\n➕ Dodawanie filmu: {selected_movie['title']}...")
-            new_movie_df = process_movies_to_dataframe([selected_movie])
+            api_key = load_api_key_from_env()
+            new_movie_df = process_movies_to_dataframe([selected_movie], fetch_keywords=True, api_key=api_key)
             
             # Dodaj do DataFrame
             if not new_movie_df.empty:
@@ -106,72 +114,50 @@ class MovieRecommender:
             return False, None
     
     def get_recommendations(self, movie_title, n=5):
-        """Generuje rekomendacje dla podanego filmu"""
-        idx = None
-        
-        # DEBUG: Pokaż co użytkownik wpisał
-        print(f"[DEBUG] Wyszukiwany tytuł: '{movie_title}' (długość: {len(movie_title)})")
-        
+        """Generuje rekomendacje dla podanego filmu (wersja webowa - bez input())"""
         # Próba 1: Dokładne dopasowanie tytułu (case-insensitive)
         exact_match = self.df[self.df['title'].str.lower() == movie_title.lower()]
-        print(f"[DEBUG] Dokładne dopasowanie: {len(exact_match)} wyników")
+        
         if len(exact_match) > 0:
-            idx = exact_match.index[0]
-            print(f"[DEBUG] Znaleziono: {self.df.iloc[idx]['title']}")
+            # Znaleziono dokładne dopasowanie
+            movie_id = exact_match.iloc[0]['movieId']
+            return self._get_similar_movies(movie_id, n)
         
         # Próba 2: Częściowe dopasowanie (szukaj frazy w tytule)
-        if idx is None:
-            partial_match = self.df[self.df['title'].str.lower().str.contains(movie_title.lower(), regex=False, na=False)]
-            print(f"[DEBUG] Częściowe dopasowanie: {len(partial_match)} wyników")
-            
-            if len(partial_match) > 1:
-                # Znaleziono wiele filmów - pozwól użytkownikowi wybrać
-                print(f"\n📋 Znaleziono {len(partial_match)} filmów zawierających '{movie_title}':")
-                for i, (index, row) in enumerate(partial_match.head(10).iterrows(), 1):
-                    print(f"  {i}. {row['title']} - Ocena: {row['rating']}/10")
-                
-                if len(partial_match) > 10:
-                    print(f"  ... i {len(partial_match) - 10} więcej")
-                
-                choice = input("\nWybierz numer filmu (Enter = pierwszy, 0 = wyszukaj w API): ").strip()
-                
-                if choice == '0':
-                    # Użytkownik chce wyszukać w API
-                    idx = None
-                elif choice.isdigit() and 1 <= int(choice) <= min(10, len(partial_match)):
-                    idx = partial_match.iloc[int(choice) - 1].name
-                    print(f"✓ Wybrano: {self.df.iloc[idx]['title']}")
-                else:
-                    # Domyślnie wybierz pierwszy
-                    idx = partial_match.index[0]
-                    print(f"✓ Wybrano pierwszy: {self.df.iloc[idx]['title']}")
-                    
-            elif len(partial_match) == 1:
-                idx = partial_match.index[0]
-                print(f"[DEBUG] Znaleziono: {self.df.iloc[idx]['title']}")
-            else:
-                # Pokaż przykładowe tytuły z bazy dla porównania
-                sample_titles = self.df['title'].head(5).tolist()
-                print(f"[DEBUG] Przykładowe tytuły w bazie: {sample_titles}")
+        partial_match = self.df[self.df['title'].str.lower().str.contains(movie_title.lower(), regex=False, na=False)]
         
-        # Jeśli nie znaleziono - spróbuj wyszukać w API
-        if idx is None:
-            if self.tmdb_fetcher:
-                print(f"\nℹ️  Film '{movie_title}' nie został znaleziony w lokalnej bazie.")
-                success, movie_id = self._search_and_add_movie(movie_title)
-                
-                if success and movie_id:
-                    # Znajdź film po ID z TMDb
-                    try:
-                        idx = self.df[self.df['movieId'] == movie_id].index[0]
-                        found_title = self.df.iloc[idx]['title']
-                        print(f"✓ Znaleziono: {found_title}")
-                    except (IndexError, KeyError):
-                        return f"Błąd: Film został dodany, ale nie można go znaleźć w bazie."
-                else:
-                    return f"Film '{movie_title}' nie został znaleziony w bazie danych ani w TMDb API."
-            else:
-                return f"Film '{movie_title}' nie został znaleziony w bazie danych. Aby włączyć automatyczne wyszukiwanie, ustaw TMDB_API_KEY."
+        if len(partial_match) > 1:
+            # Wiele dopasowań - zwróć listę do wyboru w przeglądarce
+            columns = ['movieId', 'title', 'genres', 'year', 'rating', 'poster_url'] if 'poster_url' in self.df.columns else ['movieId', 'title', 'genres', 'year', 'rating']
+            return {
+                'type': 'multiple_matches',
+                'movies': partial_match[columns].to_dict('records')
+            }
+        elif len(partial_match) == 1:
+            # Jeden film znaleziony
+            movie_id = partial_match.iloc[0]['movieId']
+            return self._get_similar_movies(movie_id, n)
+        
+        # Nie znaleziono - sprawdź TMDb API
+        if self.tmdb_fetcher:
+            success, movie_id = self._search_and_add_movie(movie_title)
+            if success and movie_id:
+                return self._get_similar_movies(movie_id, n)
+            return f"Film '{movie_title}' nie został znaleziony w bazie danych ani w TMDb API."
+        
+        return f"Film '{movie_title}' nie został znaleziony w bazie danych. Aby włączyć automatyczne wyszukiwanie, ustaw TMDB_API_KEY."
+    
+    def get_recommendations_by_id(self, movie_id, n=5):
+        """Generuje rekomendacje na podstawie ID filmu (po wyborze użytkownika)"""
+        return self._get_similar_movies(movie_id, n)
+    
+    def _get_similar_movies(self, movie_id, n=5):
+        """Wewnętrzna metoda do generowania podobnych filmów na podstawie ID"""
+        # Znajdź indeks filmu po movieId
+        try:
+            idx = self.df[self.df['movieId'] == movie_id].index[0]
+        except (IndexError, KeyError):
+            return f"Film o ID {movie_id} nie został znaleziony w bazie."
         
         # Pobierz podobieństwa dla tego filmu
         sim_scores = list(enumerate(self.cosine_sim[idx]))

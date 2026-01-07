@@ -98,6 +98,23 @@ class TMDbFetcher:
         print(f"✅ Pobrano {len(movies)} najlepiej ocenianych filmów")
         return movies
     
+    def get_movie_keywords(self, movie_id: int) -> List[str]:
+        """
+        Pobiera słowa kluczowe (keywords) dla danego filmu
+        
+        Args:
+            movie_id: ID filmu w TMDb
+            
+        Returns:
+            Lista słów kluczowych
+        """
+        try:
+            data = self._make_request(f'/movie/{movie_id}/keywords')
+            keywords = data.get('keywords', [])
+            return [kw.get('name', '') for kw in keywords]
+        except Exception as e:
+            return []
+    
     def get_movies_by_genre(self, genre_id: int, pages: int = 5) -> List[Dict]:
         """
         Pobiera filmy według gatunku
@@ -175,19 +192,29 @@ class TMDbFetcher:
         return movies
 
 
-def process_movies_to_dataframe(movies: List[Dict]) -> pd.DataFrame:
+def process_movies_to_dataframe(movies: List[Dict], fetch_keywords: bool = False, api_key: str = None) -> pd.DataFrame:
     """
-    Przetwarza dane filmów z TMDb API do formatu DataFrame
+    Przetwarza surowe dane filmów z API do DataFrame
     
     Args:
-        movies: Lista filmów z API
+        movies: Lista filmów z API TMDb
+        fetch_keywords: Czy pobierać słowa kluczowe (wolniejsze, wymaga dodatkowych zapytań API)
+        api_key: Klucz API TMDb (wymagany jeśli fetch_keywords=True)
         
     Returns:
-        DataFrame z przetworzonymi danymi
+        DataFrame z przetworzonymi filmami
     """
     processed_movies = []
     
-    for movie in movies:
+    # Inicjalizuj fetcher do pobierania keywords jeśli potrzebne
+    fetcher = None
+    if fetch_keywords and api_key:
+        fetcher = TMDbFetcher(api_key)
+    
+    total = len(movies)
+    for idx, movie in enumerate(movies, 1):
+        if fetch_keywords and idx % 50 == 0:
+            print(f"  Przetwarzanie z keywords: {idx}/{total}...", end='\r')
         # Pobierz gatunki (genre_ids to lista ID)
         genre_ids = movie.get('genre_ids', [])
         
@@ -211,6 +238,13 @@ def process_movies_to_dataframe(movies: List[Dict]) -> pd.DataFrame:
         poster_path = movie.get('poster_path', '')
         poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ''
         
+        # Pobierz keywords jeśli włączone
+        keywords_str = ''
+        if fetcher:
+            keywords_list = fetcher.get_movie_keywords(movie.get('id'))
+            keywords_str = ' '.join(keywords_list) if keywords_list else ''
+            time.sleep(0.1)  # Throttle API requests
+        
         processed_movies.append({
             'movieId': movie.get('id'),
             'title': f"{movie.get('title', 'Unknown')} ({year})" if year else movie.get('title', 'Unknown'),
@@ -220,7 +254,8 @@ def process_movies_to_dataframe(movies: List[Dict]) -> pd.DataFrame:
             'num_ratings': movie.get('vote_count', 0),
             'popularity': round(movie.get('popularity', 0), 2),
             'overview': movie.get('overview', ''),
-            'poster_url': poster_url
+            'poster_url': poster_url,
+            'keywords': keywords_str
         })
     
     df = pd.DataFrame(processed_movies)
@@ -277,7 +312,8 @@ def download_tmdb_data(api_key: str,
     all_movies.extend(top_rated)
     
     # Przetwórz dane
-    print("\n🔄 Przetwarzanie danych...")
+    print("\n🔄 Przetwarzanie danych i pobieranie keywords...")
+    df = process_movies_to_dataframe(all_movies, fetch_keywords=True, api_key=api_key)
     df = process_movies_to_dataframe(all_movies)
     
     # Sortuj według popularności

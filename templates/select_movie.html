@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Wybierz film - Movie Recommender{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Znaleziono {{ movies|length }} filmów dla "{{ search_query }}"</h1>
+    <p class="subtitle">Wybierz film, dla którego chcesz otrzymać rekomendacje:</p>
+    
+    <div class="movie-grid">
+        {% for movie in movies %}
+        <div class="movie-card">
+            {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Poster'">
+            {% else %}
+            <img src="https://via.placeholder.com/500x750?text=No+Poster" alt="{{ movie.title }}">
+            {% endif %}
+            
+            <div class="movie-info">
+                <h3>{{ movie.title }}</h3>
+                <p class="movie-year">{{ movie.year }}</p>
+                <p class="movie-genres">{{ movie.genres.replace('|', ' • ') }}</p>
+                <p class="movie-rating">⭐ {{ movie.rating }}/10</p>
+                
+                <form method="POST" action="/search">
+                    <input type="hidden" name="movie_id" value="{{ movie.movieId }}">
+                    <input type="hidden" name="n_recommendations" value="{{ n_recommendations }}">
+                    <button type="submit" class="btn-select">Wybierz ten film</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.movie-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.movie-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.movie-card img {
+    width: 100%;
+    height: 330px;
+    object-fit: cover;
+    display: block;
+}
+
+.movie-info {
+    padding: 15px;
+}
+
+.movie-info h3 {
+    font-size: 1.1em;
+    margin: 0 0 8px 0;
+    color: #333;
+    font-weight: 600;
+    min-height: 2.4em;
+    line-height: 1.2em;
+}
+
+.movie-year {
+    color: #666;
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+.movie-genres {
+    color: #999;
+    font-size: 0.85em;
+    margin: 8px 0;
+    min-height: 2.4em;
+}
+
+.movie-rating {
+    color: #f39c12;
+    font-weight: bold;
+    font-size: 0.95em;
+    margin: 10px 0;
+}
+
+.btn-select {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-select:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: scale(1.02);
+}
+
+.btn-select:active {
+    transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+    }
+    
+    .movie-card img {
+        height: 240px;
+    }
+    
+    .movie-info h3 {
+        font-size: 1em;
+    }
+}
+</style>
+{% endblock %}

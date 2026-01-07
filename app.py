@@ -40,13 +40,35 @@ def search():
         return jsonify({'error': 'System rekomendacji niedostępny'}), 500
     
     movie_title = request.form.get('movie_title', '').strip()
+    movie_id = request.form.get('movie_id')  # ID filmu po wyborze z listy
     n_recommendations = int(request.form.get('n_recommendations', 6))
     
-    if not movie_title:
+    if not movie_title and not movie_id:
         return jsonify({'error': 'Nie podano tytułu filmu'}), 400
     
-    # Pobierz rekomendacje
+    # Jeśli wybrano film z listy (movie_id)
+    if movie_id:
+        recommendations = recommender.get_recommendations_by_id(int(movie_id), n_recommendations)
+        
+        if isinstance(recommendations, str):
+            return render_template('results.html', error=recommendations)
+        
+        movies_list = recommendations.to_dict('records')
+        selected_movie = recommender.df[recommender.df['movieId'] == int(movie_id)].iloc[0]
+        
+        return render_template('results.html', 
+                             movies=movies_list, 
+                             search_query=selected_movie['title'])
+    
+    # Wyszukiwanie po tytule
     recommendations = recommender.get_recommendations(movie_title, n_recommendations)
+    
+    # Sprawdź czy trzeba wybrać z listy
+    if isinstance(recommendations, dict) and recommendations.get('type') == 'multiple_matches':
+        return render_template('select_movie.html', 
+                             movies=recommendations['movies'],
+                             search_query=movie_title,
+                             n_recommendations=n_recommendations)
     
     if isinstance(recommendations, str):
         # Błąd - film nie znaleziony
