@@ -8,12 +8,22 @@ System rekomendacji filmów z interfejsem webowym Flask i automatycznym pobieran
 
 ## ✨ Funkcje
 
-- 🔍 **Inteligentne wyszukiwanie** - automatyczne pobieranie filmów z TMDb API
-- 🎯 **Rekomendacje** - algorytm content-based filtering (TF-IDF + cosine similarity)
-- 🖼️ **Okładki filmów** - wysokiej jakości obrazy z TMDb (automatycznie przy pobieraniu)
+- 🔍 **Inteligentne wyszukiwanie** - wyszukiwanie filmów w bazie danych
+- 🎯 **Rekomendacje oparte na treści** - algorytm content-based filtering (TF-IDF + cosine similarity)
+- 🧠 **Analiza semantyczna** - używa gatunków i opisów fabuły (overview) do lepszych rekomendacji
+- 🎬 **Wybór z wielu wyników** - gdy jest kilka filmów o podobnym tytule, wybierasz w przeglądarce
+- 🖼️ **Okładki filmów** - wysokiej jakości obrazy z TMDb
 - 🎭 **Przeglądanie według gatunków** - Action, Comedy, Drama, Sci-Fi i więcej
 - 📱 **Responsywny design** - działa na desktop i mobile
 - ⭐ **Oceny i statystyki** - rating, rok produkcji, popularność
+
+## 🎨 Technologie
+
+- **Backend:** Python, Flask
+- **ML:** scikit-learn (TF-IDF, cosine similarity)
+- **Data:** pandas, numpy
+- **API:** The Movie Database (TMDb)
+- **Frontend:** HTML, CSS (responsywne)
 
 ## 🚀 Szybki Start
 
@@ -25,8 +35,8 @@ System rekomendacji filmów z interfejsem webowym Flask i automatycznym pobieran
 
 ```bash
 # Sklonuj repozytorium
-git clone <your-repo-url>
-cd MovieRecomend
+git clone https://github.com/Erni0k/MovieRecommend.git
+cd MovieRecommend
 
 # Zainstaluj zależności
 pip install -r requirements.txt
@@ -49,7 +59,12 @@ TMDB_API_KEY=twoj_klucz_api_tutaj
 python download_data.py
 ```
 
-Wybierz liczbę filmów (zalecane: 400-1000 dla startu).
+Wybierz liczbę filmów:
+- **Opcja 1:** ~400 filmów (szybkie, zalecane do testów)
+- **Opcja 2:** ~1000 filmów (średnie)
+- **Opcja 3:** ~2000 filmów (duże)
+
+**Uwaga:** Pobieranie może trwać 5-10 minut.
 
 ### 5. Uruchom aplikację
 
@@ -61,7 +76,7 @@ python app.py
 Otwórz: **http://localhost:5000**
 
 ```bash
-# Lub interfejs CLI
+# Lub interfejs CLI (przestarzały)
 python main.py
 ```
 
@@ -99,9 +114,10 @@ MovieRecomend/
 ### Interfejs Webowy
 
 1. **Wyszukiwanie filmu:**
-   - Wpisz tytuł filmu
-   - Wybierz liczbę rekomendacji
-   - Kliknij "Szukaj"
+   - Wpisz tytuł filmu (np. "Avatar", "Matrix")
+   - Jeśli jest kilka filmów o podobnym tytule, zobaczysz listę do wyboru
+   - Wybierz film z listy klikając "Wybierz ten film"
+   - Otrzymasz personalizowane rekomendacje
 
 2. **Przeglądanie według gatunku:**
    - Kliknij gatunek w nawigacji
@@ -111,30 +127,41 @@ MovieRecomend/
    - Kliknij "Wszystkie filmy" w menu
    - Lub przejdź do `/all`
 
-### Interfejs CLI
-
-```bash
-python main.py
-```
-
-Opcje menu:
-1. Pokaż rekomendacje dla filmu
-2. Pokaż najpopularniejsze filmy
-3. Szukaj filmów według gatunku
-4. Wyświetl wszystkie filmy
-5. Wyjście
-
 ## 🔧 Jak to działa?
 
 ### Algorytm Rekomendacji
 
-1. **TF-IDF Vectorization** - przekształca gatunki i rok produkcji na wektory
-2. **Cosine Similarity** - oblicza podobieństwo między filmami
-3. **Multi-stage search:**
-   - Dokładne dopasowanie tytułu
-   - Częściowe dopasowanie (np. "Terrifier" → znajdzie "Terrifier 2", "Terrifier 3")
-   - Wyszukiwanie w TMDb API (jeśli film nie jest w bazie)
-   - Automatyczne dodanie nowego filmu do bazy
+System używa **content-based filtering** z następującymi cechami:
+
+1. **Cechy filmów:**
+   - **Gatunki (podwójna waga)** - Action, Sci-Fi, Drama, etc.
+   - **Overview (opis fabuły)** - wyłapuje motywy, klimat, słowa kluczowe
+   
+2. **TF-IDF Vectorization** - przekształca tekst na wektory numeryczne
+   - Nadaje większą wagę rzadkim słowom (np. "dystopia" vs "film")
+   - Uwzględnia kontekst semantyczny z opisów
+
+3. **Cosine Similarity** - oblicza podobieństwo między filmami
+   - Wartość 0-1 (1 = identyczne)
+   - Sortuje filmy według najbardziej podobnych
+
+**Przykład:**
+```
+Film: "Inception"
+Cechy: "Action Sci-Fi Thriller Action Sci-Fi Thriller Dom Cobb is a skilled thief stealing secrets from dreams..."
+
+System poleci:
+- Inne filmy o snach, kradzieżach, umysłach
+- Filmy Sci-Fi z podobnym klimatem
+- Action/Thriller z podobną fabułą
+```
+
+### Multi-stage Search
+
+1. **Dokładne dopasowanie** - "Avatar" → "Avatar (2009)"
+2. **Częściowe dopasowanie** - "terrifier" → lista: "Terrifier", "Terrifier 2", "Terrifier 3"
+3. **Wybór w przeglądarce** - użytkownik wybiera z listy (BRAK input() w konsoli!)
+4. **Generowanie rekomendacji** - na podstawie wybranego filmu
 
 ### TMDb API
 
@@ -156,10 +183,15 @@ URL format: `https://image.tmdb.org/t/p/w500/[poster_path].jpg`
 | Endpoint | Metoda | Opis |
 |----------|--------|------|
 | `/` | GET | Strona główna z top 12 filmów |
-| `/search` | POST | Wyszukiwanie i rekomendacje |
+| `/search` | POST | Wyszukiwanie i rekomendacje (obsługuje `movie_title` i `movie_id`) |
 | `/genre/<nazwa>` | GET | Filmy według gatunku |
 | `/all` | GET | Wszystkie filmy w bazie |
 | `/api/search?q=<query>` | GET | AJAX wyszukiwanie (JSON) |
+
+### Nowe w wersji 2.0:
+- `select_movie.html` - szablon do wyboru filmu z wielu wyników
+- `get_recommendations_by_id()` - rekomendacje na podstawie ID filmu
+- Brak blokowania przez `input()` w konsoli
 
 ## ⚙️ Konfiguracja
 
