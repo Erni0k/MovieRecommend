@@ -80,6 +80,20 @@ Otwórz: **http://localhost:5000**
 python main.py
 ```
 
+### 6. Analiza parametrów (opcjonalnie)
+
+```bash
+python analyze_parameters.py
+```
+
+Skrypt wygeneruje szczegółową analizę:
+- Parametry TF-IDF
+- Wpływ wag gatunków
+- Optymalna liczba rekomendacji
+- Rozkład podobieństwa
+- Korelacja ocen
+- Wykresy: `similarity_distribution.png`, `genre_distribution.png`, `rating_correlation.png`
+
 ## 📁 Struktura Projektu
 
 ```
@@ -89,6 +103,7 @@ MovieRecommend/
 ├── recommender.py            # Logika rekomendacji (TF-IDF + cosine similarity)
 ├── tmdb_fetcher.py           # Komunikacja z TMDb API
 ├── download_data.py          # Pobieranie początkowej bazy danych
+├── analyze_parameters.py    # Analiza parametrów systemu rekomendacji (NOWE)
 │
 ├── templates/                # Szablony HTML
 │   ├── base.html            # Szablon bazowy
@@ -114,7 +129,29 @@ MovieRecommend/
 
 ### Interfejs Webowy
 
-1. **Wyszukiwanie filmu:**
+1.# Analiza Parametrów
+
+**analyze_parameters.py** - narzędzie do głębokiej analizy systemu:
+
+```bash
+python analyze_parameters.py
+```
+
+**Co analizuje:**
+- ✅ **Parametry TF-IDF** - wpływ max_features na jakość (100, 500, 1000, 5000)
+- ✅ **Wagi gatunków** - testowanie różnych wag dla genres vs overview
+- ✅ **Liczba rekomendacji** - optymalne n dla różnych filmów
+- ✅ **Rozkład podobieństwa** - statystyki macierzy cosine similarity
+- ✅ **Wpływ gatunków** - popularność i znaczenie gatunków
+- ✅ **Korelacja ocen** - relacja między oceną bazową a rekomendacjami
+- ✅ **Ważność cech** - top 20 słów/fraz w TF-IDF
+
+**Wyniki:**
+- Raporty w konsoli z detalami każdej analizy
+- 3 wykresy PNG: podobieństwo, gatunki, korelacja
+- Pomaga w optymalizacji parametrów algorytmu
+
+## **Wyszukiwanie filmu:**
    - Wpisz tytuł filmu (np. "Avatar", "Matrix")
    - Jeśli jest kilka filmów o podobnym tytule, zobaczysz listę do wyboru
    - Wybierz film z listy klikając "Wybierz ten film"
@@ -168,6 +205,8 @@ System poleci:
 
 - Automatyczne pobieranie nowych filmów
 - Okładki 500px (linki, nie pliki)
+matplotlib>=3.5.0         # Do wykresów (analyze_parameters.py)
+seaborn>=0.11.0          # Do wizualizacji (analyze_parameters.py)
 - Metadane: oceny, opisy, gatunki, rok
 - Rate limiting: pauza co 35 zapytań
 
@@ -273,9 +312,53 @@ Ustaw TMDB_API_KEY w pliku .env
 ### Brak pliku movies.csv
 ```bash
 python download_data.py
+## 🔬 Dla Zaawansowanych
+
+### Analiza i Optymalizacja
+
+System zawiera narzędzie analityczne **analyze_parameters.py** które pozwala:
+
+1. **Testować różne konfiguracje TF-IDF:**
+   ```python
+   max_features_options = [100, 500, 1000, 5000, None]
+   ```
+
+2. **Eksperymentować z wagami:**
+   ```python
+   # W recommender.py, metoda _prepare_features()
+   genres_doubled = genres + ' ' + genres  # Podwójna waga
+   ```
+
+3. **Mierzyć jakość rekomendacji:**
+   - Średnia ocena rekomendacji
+   - Rozkład podobieństwa
+   - Korelacja z filmem bazowym
+
+4. **Wizualizować dane:**
+   - Histogramy podobieństwa
+   - Rozkład gatunków
+   - Scatter plots korelacji
+
+### Przykładowe wyniki analizy:
+
 ```
-Aplikacja się zawiesza
-Sprawdź czy nie ma `input()` w kodzie - wszystkie interakcje powinny być przez przeglądarkę.
+=== ANALIZA PARAMETRÓW TF-IDF ===
+Max features: 1000
+  - Wymiar macierzy: (1755, 1000)
+  - Liczba unikalnych cech: 1000
+  - Gęstość macierzy: 0.0523
+
+=== ANALIZA WAG GATUNKÓW ===
+Waga gatunków: 2
+  Rekomendacje dla 'The Matrix':
+    1. The Matrix Reloaded (podobieństwo: 0.8642)
+    2. The Matrix Revolutions (podobieństwo: 0.8401)
+    ...
+```
+
+---
+
+
 
 ## 📝 Licencja
 
