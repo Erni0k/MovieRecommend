@@ -243,6 +243,9 @@ numpy>=1.23.0
 scikit-learn>=1.2.0
 requests>=2.28.0
 Flask>=2.3.0
+python-dotenv>=1.0.0
+matplotlib>=3.5.0         # Do wykresów (analyze_parameters.py)
+seaborn>=0.11.0          # Do wizualizacji (analyze_parameters.py)
 ```
 
 ### Zmiana rozmiaru okładek
