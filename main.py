@@ -60,9 +60,27 @@ def main():
             
             if isinstance(recommendations, str):
                 print(f"\n❌ {recommendations}")
-            else:
+            elif isinstance(recommendations, dict) and recommendations.get('type') == 'multiple_matches':
+                print(f"\n📋 Znaleziono {len(recommendations['movies'])} filmów o podobnym tytule:")
+                for i, m in enumerate(recommendations['movies'][:10], 1):
+                    year = m.get('year', '?')
+                    rating = m.get('rating', 0)
+                    print(f"  {i}. {m['title']} ({year}) - Ocena: {rating}/10")
+                
+                choice = input("\nWybierz numer filmu (Enter = anuluj): ").strip()
+                if choice.isdigit() and 1 <= int(choice) <= len(recommendations['movies']):
+                    selected = recommendations['movies'][int(choice) - 1]
+                    recs = recommender.get_recommendations_by_id(selected['movieId'], n)
+                    if isinstance(recs, pd.DataFrame):
+                        print(f"\n🎬 Rekomendacje dla filmu '{selected['title']}':\n")
+                        print(recs.to_string(index=False))
+                    else:
+                        print(f"\n❌ {recs}")
+            elif isinstance(recommendations, pd.DataFrame):
                 print(f"\n🎬 Rekomendacje dla filmu '{movie}':\n")
                 print(recommendations.to_string(index=False))
+            else:
+                print(f"\n❌ Nieoczekiwany format odpowiedzi")
             
         elif choice == '2':
             print("\n--- Najpopularniejsze filmy ---")

@@ -15,6 +15,11 @@ class MovieRecommender:
     
     def __init__(self, data_path='data/movies.csv', tmdb_api_key=None):
         """Inicjalizacja systemu rekomendacji"""
+        # Jeśli ścieżka jest względna, użyj katalogu tego skryptu jako bazowego
+        if not os.path.isabs(data_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            data_path = os.path.join(script_dir, data_path)
+        
         self.data_path = data_path
         self.df = pd.read_csv(data_path)
         self.tfidf_vectorizer = TfidfVectorizer(stop_words='english')
